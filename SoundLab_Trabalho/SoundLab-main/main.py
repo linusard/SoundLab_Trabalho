@@ -19,6 +19,7 @@ operação nova entre elas?"
 
 from soundlab.acervo import Acervo
 from soundlab.faixa import Faixa
+from soundlab.fila import FilaCircular, FilaExecucao, trocar_modo
 from soundlab.pilha import Pilha
 from soundlab.playlist import Playlist
 
@@ -33,6 +34,10 @@ OPCOES = """
                         12  Tocar faixa do acervo (historico)
                         13  Desfazer reproducao (historico)
                         14 Desfazer ultima interacao (playlist) (nova funcionalidade)
+                        15 Adicionar a fila (a seguir)
+                        16 Tocar proxima da fila
+                        17 Ligar/desligar modo repeticao
+                        18 Ver fila
 0  Sair
 +------------------------------------------------+"""
 
@@ -169,6 +174,39 @@ def desfazer_playlist(playlist, pilha_desfazer):
         print(f"  desfazendo: '{faixa.titulo}' inserida de volta na posicao {posicao}")
 
 
+# Semana 1 - fila de execucao e modo repeticao
+def enfileirar_faixa(acervo, fila):
+    faixa = acervo.buscar(input("  titulo: ").strip())
+    if faixa is None:
+        print("  nao esta no acervo")
+        return
+    fila.enfileirar(faixa)
+    print(f"  '{faixa.titulo}' entrou na fila")
+
+
+def tocar_da_fila(fila):
+    if fila.vazia():
+        print("  fila vazia")
+        return
+    faixa = fila.desenfileirar()
+    faixa.tocar()
+    print(f"  tocando: {faixa}")
+
+
+def alternar_repeticao(fila):
+    """Devolve a nova fila, que o main passa a usar."""
+    nova = trocar_modo(fila)
+    estado = "LIGADO" if isinstance(nova, FilaCircular) else "DESLIGADO"
+    print(f"  modo repeticao {estado}")
+    return nova
+
+
+def ver_fila(fila):
+    estado = "ligada" if isinstance(fila, FilaCircular) else "desligada"
+    print(f"  a seguir ({len(fila)} faixas, repeticao {estado})")
+    for posicao, faixa in enumerate(fila, start=1):
+        print(f"    {posicao}. {faixa}")
+
 
 def main():
     acervo = carregar_acervo()
@@ -177,6 +215,9 @@ def main():
 
     # criando a pilha de desfazer as ações
     pilha_desfazer = Pilha()
+
+    # fila "a seguir"; comeca com a repeticao desligada
+    fila = FilaExecucao()
 
     while True:
         print(OPCOES)
@@ -203,6 +244,10 @@ def main():
             elif opcao == "13": desfazer_reproducao(historico)
             # a nova opççao
             elif opcao == "14": desfazer_playlist(playlist, pilha_desfazer)
+            elif opcao == "15": enfileirar_faixa(acervo, fila)
+            elif opcao == "16": tocar_da_fila(fila)
+            elif opcao == "17": fila = alternar_repeticao(fila)
+            elif opcao == "18": ver_fila(fila)
             else: print("  opcao invalida")
         except (ValueError, IndexError) as erro:
             print(f"  {erro}")
