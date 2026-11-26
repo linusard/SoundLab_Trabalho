@@ -19,6 +19,7 @@ operação nova entre elas?"
 
 from soundlab.acervo import Acervo
 from soundlab.arvore import ArvoreBinaria
+from soundlab.arvore_busca import ArvoreBusca
 from soundlab.faixa import Faixa
 from soundlab.fila import FilaCircular, FilaExecucao, trocar_modo
 from soundlab.pilha import Pilha
@@ -40,6 +41,8 @@ OPCOES = """
                         17 Ligar/desligar modo repeticao
                         18 Ver fila
                         19 Indice em arvore (3 percursos)
+                        20 Buscar por titulo (arvore de busca)
+                        21 Listar acervo em ordem alfabetica
 0  Sair
 +------------------------------------------------+"""
 
@@ -209,8 +212,9 @@ def ver_fila(fila):
     for posicao, faixa in enumerate(fila, start=1):
         print(f"    {posicao}. {faixa}")
 
+# Semana 2 :
 def mostrar_percursos(acervo):
-    """aki monta a arvore com o acervo atual e mostra os tres caminha que da pra sequir"""
+    """Monta a arvore com o acervo atual e mostra os tres percursos."""
     if len(acervo) == 0:
         print("  acervo vazio")
         return
@@ -226,6 +230,34 @@ def mostrar_percursos(acervo):
     print(f"      {'PRE-ORDEM':<{largura}} | {'EM-ORDEM':<{largura}} | POS-ORDEM")
     for numero, (a, b, c) in enumerate(zip(pre, em, pos), start=1):
         print(f"  {numero:>2}. {a.titulo:<{largura}} | {b.titulo:<{largura}} | {c.titulo}")
+
+# semana 3 :
+def montar_abb(acervo):
+    """Remontada a cada consulta, para refletir cadastros e remocoes."""
+
+    arvore = ArvoreBusca()
+    for faixa in acervo:
+        arvore.inserir(faixa)
+    return arvore
+
+
+def buscar_na_abb(acervo):
+    arvore = montar_abb(acervo)
+    titulo = input("  titulo: ").strip()
+    faixa = arvore.buscar(titulo)
+    visitadas = arvore.caminho(titulo)
+    if visitadas:
+        print(f"  caminho: {' -> '.join(f.titulo for f in visitadas)}")
+    print(f"  comparacoes: {len(visitadas)}")
+    print(f"  {faixa}" if faixa else "  nao encontrada")
+
+
+def listar_alfabetico(acervo):
+    if len(acervo) == 0:
+        print("  acervo vazio")
+        return
+    for faixa in montar_abb(acervo).em_ordem():
+        print(f"  {faixa}")
 
 
 def main():
@@ -269,6 +301,8 @@ def main():
             elif opcao == "17": fila = alternar_repeticao(fila)
             elif opcao == "18": ver_fila(fila)
             elif opcao == "19": mostrar_percursos(acervo)
+            elif opcao == "20": buscar_na_abb(acervo)
+            elif opcao == "21": listar_alfabetico(acervo)
             else: print("  opcao invalida")
         except (ValueError, IndexError) as erro:
             print(f"  {erro}")
