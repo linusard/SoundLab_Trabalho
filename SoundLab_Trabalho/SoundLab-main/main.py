@@ -18,6 +18,7 @@ operação nova entre elas?"
 """
 
 from soundlab.acervo import Acervo
+from soundlab.arvore import ArvoreBinaria
 from soundlab.faixa import Faixa
 from soundlab.fila import FilaCircular, FilaExecucao, trocar_modo
 from soundlab.pilha import Pilha
@@ -38,6 +39,7 @@ OPCOES = """
                         16 Tocar proxima da fila
                         17 Ligar/desligar modo repeticao
                         18 Ver fila
+                        19 Indice em arvore (3 percursos)
 0  Sair
 +------------------------------------------------+"""
 
@@ -207,6 +209,24 @@ def ver_fila(fila):
     for posicao, faixa in enumerate(fila, start=1):
         print(f"    {posicao}. {faixa}")
 
+def mostrar_percursos(acervo):
+    """aki monta a arvore com o acervo atual e mostra os tres caminha que da pra sequir"""
+    if len(acervo) == 0:
+        print("  acervo vazio")
+        return
+    arvore = ArvoreBinaria()
+    for faixa in acervo:
+        arvore.inserir(faixa)
+
+    pre = arvore.pre_ordem()
+    em = arvore.em_ordem()
+    pos = arvore.pos_ordem()
+
+    largura = max(len("PRE-ORDEM"), max(len(faixa.titulo) for faixa in acervo))
+    print(f"      {'PRE-ORDEM':<{largura}} | {'EM-ORDEM':<{largura}} | POS-ORDEM")
+    for numero, (a, b, c) in enumerate(zip(pre, em, pos), start=1):
+        print(f"  {numero:>2}. {a.titulo:<{largura}} | {b.titulo:<{largura}} | {c.titulo}")
+
 
 def main():
     acervo = carregar_acervo()
@@ -248,6 +268,7 @@ def main():
             elif opcao == "16": tocar_da_fila(fila)
             elif opcao == "17": fila = alternar_repeticao(fila)
             elif opcao == "18": ver_fila(fila)
+            elif opcao == "19": mostrar_percursos(acervo)
             else: print("  opcao invalida")
         except (ValueError, IndexError) as erro:
             print(f"  {erro}")
