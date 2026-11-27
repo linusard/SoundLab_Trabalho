@@ -22,6 +22,7 @@ from soundlab.arvore import ArvoreBinaria
 from soundlab.arvore_busca import ArvoreBusca
 from soundlab.faixa import Faixa
 from soundlab.fila import FilaCircular, FilaExecucao, trocar_modo
+from soundlab.grafo import GrafoRecomendacao
 from soundlab.pilha import Pilha
 from soundlab.playlist import Playlist
 
@@ -43,6 +44,7 @@ OPCOES = """
                         19 Indice em arvore (3 percursos)
                         20 Buscar por titulo (arvore de busca)
                         21 Listar acervo em ordem alfabetica
+                        22 Recomendar a partir de uma faixa
 0  Sair
 +------------------------------------------------+"""
 
@@ -118,19 +120,25 @@ def tirar(playlist, pilha_desfazer):
     print(f"  saiu: {faixa}")
 
 
-def comecar(playlist):
-    print(f"  tocando: {playlist.comecar_reproducao()}")
+def comecar(playlist, grafo):
+    faixa = playlist.comecar_reproducao()
+    grafo.registrar_reproducao(faixa.titulo)
+    print(f"  tocando: {faixa}")
 
 
-def proxima(playlist):
-    print(f"  tocando: {playlist.proxima()}")
+def proxima(playlist, grafo):
+    faixa = playlist.proxima()
+    grafo.registrar_reproducao(faixa.titulo)
+    print(f"  tocando: {faixa}")
 
 
-def anterior(playlist):
-    print(f"  tocando: {playlist.anterior()}")
+def anterior(playlist, grafo):
+    faixa = playlist.anterior()
+    grafo.registrar_reproducao(faixa.titulo)
+    print(f"  tocando: {faixa}")
 
 
-def tocar_agora(acervo, historico):
+def tocar_agora(acervo, historico, grafo):
     """Toca uma faixa direto do acervo, fora da ordem da playlist.
 
     Cada chamada empilha uma faixa nova: o topo do historico passa a
@@ -141,10 +149,11 @@ def tocar_agora(acervo, historico):
         print("  nao esta no acervo")
         return
     historico.empilhar(faixa)
+    grafo.registrar_reproducao(faixa.titulo)
     print(f"  tocando agora: {faixa}")
 
 
-def desfazer_reproducao(historico):
+def desfazer_reproducao(historico, grafo):
     """Desempilha a faixa atual e revela a que tocava antes dela —
     exatamente o oposto de tocar_agora."""
     if historico.vazia():
@@ -153,8 +162,10 @@ def desfazer_reproducao(historico):
     atual = historico.desempilhar()
     print(f"  saindo de: {atual}")
     if historico.vazia():
+        grafo.retomar_em(None)
         print("  historico vazio - nada tocando")
     else:
+        grafo.retomar_em(historico.topo().titulo)
         print(f"  voltando a tocar: {historico.topo()}")
 
 # A-aqui começa a função de desfazer a ultima interação
@@ -189,12 +200,13 @@ def enfileirar_faixa(acervo, fila):
     print(f"  '{faixa.titulo}' entrou na fila")
 
 
-def tocar_da_fila(fila):
+def tocar_da_fila(fila, grafo):
     if fila.vazia():
         print("  fila vazia")
         return
     faixa = fila.desenfileirar()
     faixa.tocar()
+    grafo.registrar_reproducao(faixa.titulo)
     print(f"  tocando: {faixa}")
 
 
@@ -212,7 +224,7 @@ def ver_fila(fila):
     for posicao, faixa in enumerate(fila, start=1):
         print(f"    {posicao}. {faixa}")
 
-# Semana 2 :
+# Semana 2 - arvore binaria como indice do acervo
 def mostrar_percursos(acervo):
     """Monta a arvore com o acervo atual e mostra os tres percursos."""
     if len(acervo) == 0:
@@ -231,10 +243,9 @@ def mostrar_percursos(acervo):
     for numero, (a, b, c) in enumerate(zip(pre, em, pos), start=1):
         print(f"  {numero:>2}. {a.titulo:<{largura}} | {b.titulo:<{largura}} | {c.titulo}")
 
-# semana 3 :
+# Semana 3 - arvore binaria de busca
 def montar_abb(acervo):
     """Remontada a cada consulta, para refletir cadastros e remocoes."""
-
     arvore = ArvoreBusca()
     for faixa in acervo:
         arvore.inserir(faixa)
@@ -259,6 +270,21 @@ def listar_alfabetico(acervo):
     for faixa in montar_abb(acervo).em_ordem():
         print(f"  {faixa}")
 
+# semana 4 
+def recomendar(acervo, grafo):
+    faixa = acervo.buscar(input("  titulo: ").strip())
+    if faixa is None:
+        print("  nao esta no acervo")
+        return
+    todas = grafo.recomendar(faixa.titulo)
+    if not todas:
+        print("  ainda nao ha recomendacoes para essa faixa")
+        return
+    diretas = grafo.recomendar(faixa.titulo, 1)
+    for titulo in todas:
+        nivel = 1 if titulo in diretas else 2
+        print(f"  {titulo} (distancia {nivel})")
+
 
 def main():
     acervo = carregar_acervo()
@@ -270,6 +296,8 @@ def main():
 
     # fila "a seguir"; comeca com a repeticao desligada
     fila = FilaExecucao()
+
+    grafo = GrafoRecomendacao()
 
     while True:
         print(OPCOES)
@@ -289,20 +317,21 @@ def main():
             elif opcao == "7": inserir(acervo, playlist, pilha_desfazer)
             elif opcao == "8": tirar(playlist, pilha_desfazer)
 
-            elif opcao == "9": comecar(playlist)
-            elif opcao == "10": proxima(playlist)
-            elif opcao == "11": anterior(playlist)
-            elif opcao == "12": tocar_agora(acervo, historico)
-            elif opcao == "13": desfazer_reproducao(historico)
+            elif opcao == "9": comecar(playlist, grafo)
+            elif opcao == "10": proxima(playlist, grafo)
+            elif opcao == "11": anterior(playlist, grafo)
+            elif opcao == "12": tocar_agora(acervo, historico, grafo)
+            elif opcao == "13": desfazer_reproducao(historico, grafo)
             # a nova opççao
             elif opcao == "14": desfazer_playlist(playlist, pilha_desfazer)
             elif opcao == "15": enfileirar_faixa(acervo, fila)
-            elif opcao == "16": tocar_da_fila(fila)
+            elif opcao == "16": tocar_da_fila(fila, grafo)
             elif opcao == "17": fila = alternar_repeticao(fila)
             elif opcao == "18": ver_fila(fila)
             elif opcao == "19": mostrar_percursos(acervo)
             elif opcao == "20": buscar_na_abb(acervo)
             elif opcao == "21": listar_alfabetico(acervo)
+            elif opcao == "22": recomendar(acervo, grafo)
             else: print("  opcao invalida")
         except (ValueError, IndexError) as erro:
             print(f"  {erro}")
