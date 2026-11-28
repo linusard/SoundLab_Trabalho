@@ -1,0 +1,24 @@
+" duas ou três frases comparando o resultado medido com a expectativa teórica (O(n) vs. O(log n)) — não
+precisa de gráfico, só da comparação qualitativa."
+
+1) Meu acervo (4 faixas)
+  TITULO             | achou | linear | binaria
+  Aquarela do Brasil | sim   |      1 |       2
+  Construcao         | sim   |      2 |       2
+  Ponta de Areia     | sim   |      3 |       3
+  Baiao              | sim   |      4 |       1
+  Garota de Ipanema  | nao   |      4 |       3
+  
+  MEDIA              |       |    2.8 |     2.2
+
+2) Teste extra com 100 faixas ficticias (buscando cada uma)
+  linear : media 50.5, pior caso 100
+  binaria: media 5.8, pior caso 7
+
+Interpretacao
+No meu acervo a diferenca foi pequena (media de 2.8 contra 2.2 comparacoes), e
+a linear ate ganhou ao procurar Aquarela do Brasil, que e a primeira da lista.
+A linear e O(n), porque olha uma faixa de cada vez, e a binaria e O(log n),
+porque corta pela metade o que falta procurar, mas precisa da lista em ordem.
+No teste com 100 faixas o pior caso foi 100 contra 7, mostrando que a vantagem
+da binaria aparece mais quando o acervo cresce.

@@ -20,6 +20,7 @@ operação nova entre elas?"
 from soundlab.acervo import Acervo
 from soundlab.arvore import ArvoreBinaria
 from soundlab.arvore_busca import ArvoreBusca
+from soundlab.comparacao import comparar, montar_tabela
 from soundlab.faixa import Faixa
 from soundlab.fila import FilaCircular, FilaExecucao, trocar_modo
 from soundlab.grafo import GrafoRecomendacao
@@ -45,6 +46,7 @@ OPCOES = """
                         20 Buscar por titulo (arvore de busca)
                         21 Listar acervo em ordem alfabetica
                         22 Recomendar a partir de uma faixa
+                        23 Comparar busca linear e binaria
 0  Sair
 +------------------------------------------------+"""
 
@@ -270,7 +272,7 @@ def listar_alfabetico(acervo):
     for faixa in montar_abb(acervo).em_ordem():
         print(f"  {faixa}")
 
-# semana 4 
+# Semana 4 - recomendacao
 def recomendar(acervo, grafo):
     faixa = acervo.buscar(input("  titulo: ").strip())
     if faixa is None:
@@ -284,6 +286,14 @@ def recomendar(acervo, grafo):
     for titulo in todas:
         nivel = 1 if titulo in diretas else 2
         print(f"  {titulo} (distancia {nivel})")
+
+#semmana 5
+def comparar_buscas(acervo):
+    if len(acervo) == 0:
+        print("  acervo vazio")
+        return
+    print(f"  comparacoes feitas em um acervo de {len(acervo)} faixas")
+    print(montar_tabela(comparar(acervo)))
 
 
 def main():
@@ -332,6 +342,7 @@ def main():
             elif opcao == "20": buscar_na_abb(acervo)
             elif opcao == "21": listar_alfabetico(acervo)
             elif opcao == "22": recomendar(acervo, grafo)
+            elif opcao == "23": comparar_buscas(acervo)
             else: print("  opcao invalida")
         except (ValueError, IndexError) as erro:
             print(f"  {erro}")
